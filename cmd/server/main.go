@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -47,7 +48,15 @@ func main() {
 			interval = d
 		}
 	}
-	sc := scheduler.New(s, f, interval)
+
+	var aggrThreshold int
+	if v := os.Getenv("SILA_AGGRESSIVE_THRESHOLD"); v != "" {
+		if t, err := strconv.Atoi(v); err == nil && t > 0 {
+			aggrThreshold = t
+		}
+	}
+
+	sc := scheduler.New(s, f, interval, aggrThreshold)
 	sc.Start()
 
 	adminPassword := os.Getenv("SILA_ADMIN_PASSWORD")
