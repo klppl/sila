@@ -70,6 +70,10 @@ func Parse(raw string) *Result {
 				rule = line
 			}
 		default:
+			if strings.Contains(line, "$") {
+				standalone = append(standalone, line)
+				continue
+			}
 			if strings.Contains(line, " ") {
 				domain = strings.Fields(line)[0]
 				rule = "||" + domain + "^"

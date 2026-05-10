@@ -156,3 +156,30 @@ func TestParsePathRules(t *testing.T) {
 		}
 	}
 }
+
+func TestParseGenericRules(t *testing.T) {
+	input := `
+||normal-domain.com^
+0.0.0.0 hosts-domain.com
+*$all,reason=` + "\U0001F1F8\U0001F1EA" + ` Bedrägeri / Scam,domain=scam1.se|scam2.com
+*$script,1p,domain=example.net
+*$all,reason=Blocked,domain=bad.org|worse.io
+*$image,domain=pics.example.com
+`
+	r := Parse(input)
+	expected := []string{"hosts-domain.com", "normal-domain.com"}
+	if !reflect.DeepEqual(r.Domains, expected) {
+		t.Fatalf("expected %v, got %v", expected, r.Domains)
+	}
+	if len(r.Standalone) != 4 {
+		t.Fatalf("expected 4 standalone generic rules, got %d: %v", len(r.Standalone), r.Standalone)
+	}
+	for _, s := range r.Standalone {
+		if !strings.HasPrefix(s, "*$") {
+			t.Fatalf("standalone generic rule should be preserved as-is, got: %s", s)
+		}
+		if strings.HasPrefix(s, "||") {
+			t.Fatalf("standalone generic rule should not be wrapped in ||, got: %s", s)
+		}
+	}
+}
