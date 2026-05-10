@@ -2,3 +2,4 @@
 /output/
 /sila
 *.db
+.env
