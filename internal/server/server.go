@@ -295,10 +295,7 @@ func topBars(m map[string]int, n int) []barItem {
 }
 
 func (srv *Server) publicPage(w http.ResponseWriter, r *http.Request) {
-	domains, err := srv.store.TotalDomains()
-	if err != nil {
-		logError(r, "total domains: %v", err)
-	}
+	domains := srv.scheduler.GetDomainCount()
 	listCount, err := srv.store.TotalLists()
 	if err != nil {
 		logError(r, "total lists: %v", err)
@@ -361,10 +358,7 @@ func (srv *Server) publicPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) dashboard(w http.ResponseWriter, r *http.Request) {
-	domains, err := srv.store.TotalDomains()
-	if err != nil {
-		logError(r, "total domains: %v", err)
-	}
+	domains := srv.scheduler.GetDomainCount()
 	listCount, err := srv.store.TotalLists()
 	if err != nil {
 		logError(r, "total lists: %v", err)
@@ -411,13 +405,47 @@ func (srv *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (srv *Server) blocklist(w http.ResponseWriter, r *http.Request) {
-	domains, err := srv.store.GetFilteredDomains()
-	if err != nil {
-		logError(r, "filter domains: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
+func isWildcardMatch(pattern, domain string) bool {
+	if !strings.HasPrefix(pattern, "*.") {
+		return false
 	}
+	suffix := pattern[1:]
+	if !strings.HasSuffix(domain, suffix) {
+		return false
+	}
+	prefix := domain[:len(domain)-len(suffix)]
+	return prefix != ""
+}
+
+func (srv *Server) blocklist(w http.ResponseWriter, r *http.Request) {
+	whitelist, err := srv.store.GetWhitelist()
+	if err != nil {
+		logError(r, "get whitelist: %v", err)
+	}
+
+	exact := make(map[string]bool)
+	var wildcards []string
+	for _, w := range whitelist {
+		if strings.HasPrefix(w.Pattern, "*.") {
+			wildcards = append(wildcards, w.Pattern)
+		} else {
+			exact[w.Pattern] = true
+		}
+	}
+
+	var domains []string
+	srv.scheduler.WalkRules(func(domain, rule string) {
+		if exact[domain] {
+			return
+		}
+		for _, w := range wildcards {
+			if isWildcardMatch(w, domain) {
+				return
+			}
+		}
+		domains = append(domains, domain)
+	})
+	sort.Strings(domains)
 
 	listCount, err := srv.store.TotalLists()
 	if err != nil {

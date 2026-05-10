@@ -62,6 +62,12 @@ func (sc *Scheduler) WalkRules(cb func(domain, rule string)) {
 	}
 }
 
+func (sc *Scheduler) GetDomainCount() int {
+	sc.rulesMu.RLock()
+	defer sc.rulesMu.RUnlock()
+	return len(sc.rules)
+}
+
 func (sc *Scheduler) GetExtra() []string {
 	sc.rulesMu.RLock()
 	defer sc.rulesMu.RUnlock()
