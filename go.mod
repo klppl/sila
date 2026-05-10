@@ -1,4 +1,4 @@
-module github.com/alex/sila
+module github.com/klppl/sila
 
 go 1.26.2
 

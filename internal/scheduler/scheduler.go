@@ -2,12 +2,13 @@ package scheduler
 
 import (
 	"log"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/alex/sila/internal/fetcher"
-	"github.com/alex/sila/internal/parser"
-	"github.com/alex/sila/internal/store"
+	"github.com/klppl/sila/internal/fetcher"
+	"github.com/klppl/sila/internal/parser"
+	"github.com/klppl/sila/internal/store"
 )
 
 type Scheduler struct {
@@ -165,6 +166,26 @@ func (sc *Scheduler) refresh() {
 		allExtra = append(allExtra, result.Standalone...)
 		log.Printf("scheduler: refreshed %s (%d domains)", l.Name, len(result.Domains))
 		updated++
+	}
+
+	// Compress allRules by removing redundant subdomains
+	var removed int
+	for domain := range allRules {
+		parts := strings.Split(domain, ".")
+		if len(parts) <= 2 {
+			continue
+		}
+		for i := 1; i < len(parts)-1; i++ {
+			parent := strings.Join(parts[i:], ".")
+			if pRule, ok := allRules[parent]; ok && pRule == "||"+parent+"^" {
+				delete(allRules, domain)
+				removed++
+				break
+			}
+		}
+	}
+	if removed > 0 {
+		log.Printf("scheduler: compressed out %d redundant subdomains across lists", removed)
 	}
 
 	sc.rulesMu.Lock()

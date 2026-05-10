@@ -17,9 +17,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/alex/sila/internal/fetcher"
-	"github.com/alex/sila/internal/scheduler"
-	"github.com/alex/sila/internal/store"
+	"github.com/klppl/sila/internal/fetcher"
+	"github.com/klppl/sila/internal/scheduler"
+	"github.com/klppl/sila/internal/store"
 )
 
 //go:embed templates/*.html

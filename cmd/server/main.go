@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alex/sila/internal/fetcher"
-	"github.com/alex/sila/internal/scheduler"
-	"github.com/alex/sila/internal/server"
-	"github.com/alex/sila/internal/store"
+	"github.com/klppl/sila/internal/fetcher"
+	"github.com/klppl/sila/internal/scheduler"
+	"github.com/klppl/sila/internal/server"
+	"github.com/klppl/sila/internal/store"
 )
 
 func main() {
