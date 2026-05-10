@@ -47,14 +47,19 @@ func (sc *Scheduler) IsRunning() bool {
 	return sc.running
 }
 
-func (sc *Scheduler) GetRules() map[string]string {
+func (sc *Scheduler) GetRule(domain string) (string, bool) {
 	sc.rulesMu.RLock()
 	defer sc.rulesMu.RUnlock()
-	m := make(map[string]string, len(sc.rules))
+	rule, ok := sc.rules[domain]
+	return rule, ok
+}
+
+func (sc *Scheduler) WalkRules(cb func(domain, rule string)) {
+	sc.rulesMu.RLock()
+	defer sc.rulesMu.RUnlock()
 	for k, v := range sc.rules {
-		m[k] = v
+		cb(k, v)
 	}
-	return m
 }
 
 func (sc *Scheduler) GetExtra() []string {

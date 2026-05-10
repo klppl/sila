@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -25,11 +26,14 @@ import (
 var templateFS embed.FS
 
 type Server struct {
-	store         *store.Store
-	scheduler     *scheduler.Scheduler
-	tmpl          *template.Template
-	adminPassword string
-	sessionToken  string
+	store          *store.Store
+	scheduler      *scheduler.Scheduler
+	tmpl           *template.Template
+	adminPassword  string
+	sessionToken   string
+	statsMu        sync.RWMutex
+	cachedStats    computedStats
+	statsUpdatedAt time.Time
 }
 
 func New(s *store.Store, sc *scheduler.Scheduler, adminPassword string) (*Server, error) {
@@ -213,11 +217,28 @@ type computedStats struct {
 	TopRoots []barItem
 }
 
-func computeRuleStats(rules map[string]string) computedStats {
+func (srv *Server) getStats() computedStats {
+	lastRefresh := srv.scheduler.LastRefresh()
+
+	srv.statsMu.RLock()
+	if srv.statsUpdatedAt == lastRefresh {
+		stats := srv.cachedStats
+		srv.statsMu.RUnlock()
+		return stats
+	}
+	srv.statsMu.RUnlock()
+
+	srv.statsMu.Lock()
+	defer srv.statsMu.Unlock()
+
+	if srv.statsUpdatedAt == lastRefresh {
+		return srv.cachedStats
+	}
+
 	cs := computedStats{}
 	roots := make(map[string]int)
 
-	for domain, rule := range rules {
+	srv.scheduler.WalkRules(func(domain, rule string) {
 		switch {
 		case strings.Contains(rule, "#$#"):
 			cs.Script++
@@ -237,9 +258,12 @@ func computeRuleStats(rules map[string]string) computedStats {
 		} else if len(parts) == 1 {
 			roots[domain]++
 		}
-	}
+	})
 
 	cs.TopRoots = topBars(roots, 10)
+	srv.cachedStats = cs
+	srv.statsUpdatedAt = lastRefresh
+
 	return cs
 }
 
@@ -301,8 +325,7 @@ func (srv *Server) publicPage(w http.ResponseWriter, r *http.Request) {
 	}
 	blocklistURL := scheme + "://" + r.Host
 
-	rules := srv.scheduler.GetRules()
-	stats := computeRuleStats(rules)
+	stats := srv.getStats()
 
 	sort.Slice(lists, func(i, j int) bool { return lists[i].EntryCount > lists[j].EntryCount })
 	topLists := lists
@@ -352,8 +375,7 @@ func (srv *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	lists, _ := srv.store.GetLists()
 
-	rules := srv.scheduler.GetRules()
-	stats := computeRuleStats(rules)
+	stats := srv.getStats()
 
 	sort.Slice(lists, func(i, j int) bool { return lists[i].EntryCount > lists[j].EntryCount })
 	topLists := lists
@@ -409,7 +431,6 @@ func (srv *Server) blocklist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rules := srv.scheduler.GetRules()
 	extra := srv.scheduler.GetExtra()
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -417,7 +438,7 @@ func (srv *Server) blocklist(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# Sila blocklist — generated %s\n", time.Now().UTC().Format(time.RFC3339))
 	fmt.Fprintf(w, "# %d domain rules + %d pattern rules from %d source lists\n#\n", len(domains), len(extra), listCount)
 	for _, d := range domains {
-		if rule, ok := rules[d]; ok {
+		if rule, ok := srv.scheduler.GetRule(d); ok {
 			fmt.Fprintln(w, rule)
 		} else {
 			fmt.Fprintf(w, "||%s^\n", d)
@@ -680,9 +701,8 @@ func (srv *Server) searchResults(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	rules := srv.scheduler.GetRules()
 	for i := range results {
-		if rule, ok := rules[results[i].Domain]; ok {
+		if rule, ok := srv.scheduler.GetRule(results[i].Domain); ok {
 			results[i].Rule = rule
 		}
 	}
