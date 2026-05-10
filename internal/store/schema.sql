@@ -29,4 +29,10 @@ CREATE TABLE IF NOT EXISTS blocks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pattern TEXT NOT NULL UNIQUE,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
+);
+
+CREATE TABLE IF NOT EXISTS clients (
+    ip TEXT PRIMARY KEY,
+    last_downloaded TEXT NOT NULL,
+    download_count INTEGER NOT NULL DEFAULT 1
+);

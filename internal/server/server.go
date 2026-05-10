@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -196,10 +197,12 @@ func (srv *Server) health(w http.ResponseWriter, r *http.Request) {
 }
 
 type statsData struct {
-	TotalDomains int
-	TotalLists   int
-	LastRefresh  time.Time
-	IsRunning    bool
+	TotalDomains   int
+	TotalLists     int
+	LastRefresh    time.Time
+	IsRunning      bool
+	UniqueClients  int
+	TotalDownloads int
 }
 
 type barItem struct {
@@ -390,11 +393,18 @@ func (srv *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	unique, total, err := srv.store.GetDownloadStats()
+	if err != nil {
+		logError(r, "get download stats: %v", err)
+	}
+
 	data := statsData{
-		TotalDomains: domains,
-		TotalLists:   listCount,
-		LastRefresh:  srv.scheduler.LastRefresh(),
-		IsRunning:    srv.scheduler.IsRunning(),
+		TotalDomains:   domains,
+		TotalLists:     listCount,
+		LastRefresh:    srv.scheduler.LastRefresh(),
+		IsRunning:      srv.scheduler.IsRunning(),
+		UniqueClients:  unique,
+		TotalDownloads: total,
 	}
 	srv.render(w, "dashboard", map[string]any{
 		"Title":      "Dashboard",
@@ -417,7 +427,24 @@ func isWildcardMatch(pattern, domain string) bool {
 	return prefix != ""
 }
 
+func getIP(r *http.Request) string {
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		return strings.Split(ip, ",")[0]
+	}
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
 func (srv *Server) blocklist(w http.ResponseWriter, r *http.Request) {
+	ip := getIP(r)
+	go srv.store.RecordDownload(ip)
+
 	whitelist, err := srv.store.GetWhitelist()
 	if err != nil {
 		logError(r, "get whitelist: %v", err)
