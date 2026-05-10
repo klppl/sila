@@ -16,10 +16,24 @@ go build -o sila ./cmd/server/
 
 ## Docker
 
+Pull the image from GHCR:
+
 ```bash
-docker build -t sila .
-docker run -p 8080:8080 -v sila-data:/data sila
+docker pull ghcr.io/klppl/sila:latest
 ```
+
+Run it:
+
+```bash
+docker run -d \
+  --name sila \
+  -p 8080:8080 \
+  -v /path/on/host:/data \
+  -e SILA_ADMIN_PASSWORD=your-secure-password \
+  ghcr.io/klppl/sila:latest
+```
+
+Replace `/path/on/host` with a persistent directory on your VPS and set a strong `SILA_ADMIN_PASSWORD`. All env vars listed below in the Configuration table can be passed with `-e`.
 
 ## Configuration
 
@@ -42,7 +56,7 @@ All config is via environment variables. No config file needed.
 | `GET` | `/` | Public landing page — stats, source lists, usage guide |
 | `GET` | `/blocklist.txt` | Merged blocklist in Adblock Plus syntax, filtered by whitelist |
 
-### Admin (behind `/web`, basic auth: `admin` / `$SILA_ADMIN_PASSWORD`)
+### Admin (password-protected via `/web/login`, session-based)
 
 | Method | Path | Description |
 |---|---|---|
