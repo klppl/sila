@@ -1,0 +1,44 @@
+{{define "blocks"}}
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body hx-boost="true">
+{{template "nav" .}}
+<main>
+<h1>Custom Blocks</h1>
+<p style="color:#888;font-size:0.9rem;margin-bottom:1rem;">Manually add domains or full filter rules to block. These are merged into the final output.</p>
+<div class="card">
+<div class="form-row">
+<input type="text" name="pattern" form="add-block" placeholder="example.com or ||example.com^" required>
+<button class="btn btn-primary" form="add-block">Add</button>
+</div>
+<form id="add-block"
+hx-post="/web/blocks"
+hx-target="#blocks-table"
+hx-swap="outerHTML"
+hx-on::after-request="this.reset()">
+</form>
+</div>
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:0.9rem;color:#555;">Bulk import</summary>
+<div style="margin-top:0.75rem;">
+<textarea name="patterns" form="add-blocks-bulk" placeholder="Paste domains or rules, one per line"
+style="width:100%;height:100px;padding:0.5rem;border:1px solid #ddd;border-radius:5px;font-size:0.85rem;resize:vertical;"></textarea>
+<button class="btn btn-primary" form="add-blocks-bulk" style="margin-top:0.5rem;">Import</button>
+</div>
+</details>
+<form id="add-blocks-bulk"
+hx-post="/web/blocks/bulk"
+hx-target="#blocks-table"
+hx-swap="outerHTML"
+hx-on::after-request="this.reset()">
+</form>
+</div>
+<div id="blocks-table">
+{{template "blocks-table" .Entries}}
+</div>
+</main>
+</body>
+</html>
+{{end}}

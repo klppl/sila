@@ -1,0 +1,77 @@
+{{define "dashboard"}}
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body hx-boost="true">
+{{template "nav" .}}
+<main>
+<h1>Dashboard</h1>
+<div class="stats">
+<div class="stat-card">
+<div class="value">{{.Data.TotalDomains}}</div>
+<div class="label">Blocked Domains</div>
+</div>
+<div class="stat-card">
+<div class="value">{{.Data.TotalLists}}</div>
+<div class="label">Source Lists</div>
+</div>
+<div class="stat-card">
+<div class="value">{{.BlockCount}}</div>
+<div class="label">Custom Blocks</div>
+</div>
+<div class="stat-card">
+<div class="value">{{relativeTime .Data.LastRefresh}}</div>
+<div class="label">Last Refresh</div>
+</div>
+</div>
+
+<div class="type-stats">
+<div class="type-stat"><div class="value">{{.Stats.Network}}</div><div class="label">Domain filters</div></div>
+<div class="type-stat"><div class="value">{{.Stats.Cosmetic}}</div><div class="label">Cosmetic</div></div>
+{{if gt .Stats.Script 0}}<div class="type-stat"><div class="value">{{.Stats.Script}}</div><div class="label">Scriptlets</div></div>{{end}}
+{{if gt .Stats.ExtCSS 0}}<div class="type-stat"><div class="value">{{.Stats.ExtCSS}}</div><div class="label">Extended CSS</div></div>{{end}}
+{{if gt .Stats.Except 0}}<div class="type-stat"><div class="value">{{.Stats.Except}}</div><div class="label">Exceptions</div></div>{{end}}
+</div>
+
+<div class="card" style="margin-top:1rem;">
+<form hx-post="/web/refresh" hx-swap="none">
+<button class="btn btn-primary" type="submit">
+{{if .Data.IsRunning}}<span class="spinner"></span>{{end}}
+{{if .Data.IsRunning}}Refreshing...{{else}}Refresh Now{{end}}
+</button>
+</form>
+</div>
+
+{{if .TopLists}}
+<div class="card">
+<h2>Top source lists</h2>
+<ul class="bar-chart">
+{{range .TopLists}}
+<li>
+<span class="label" title="{{.Label}}">{{.Label}}</span>
+<div class="bar-wrap"><div class="bar" style="width:{{printf "%.0f" .Width}}%"></div></div>
+<span class="count">{{.Count}}</span>
+</li>
+{{end}}
+</ul>
+</div>
+{{end}}
+
+{{if .Stats.TopRoots}}
+<div class="card">
+<h2>Top domain roots</h2>
+<ul class="bar-chart">
+{{range .Stats.TopRoots}}
+<li>
+<span class="label" title="{{.Label}}">{{.Label}}</span>
+<div class="bar-wrap"><div class="bar" style="width:{{printf "%.0f" .Width}}%"></div></div>
+<span class="count">{{.Count}}</span>
+</li>
+{{end}}
+</ul>
+</div>
+{{end}}
+</main>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,50 @@
+{{define "lists-table"}}
+<div class="card">
+{{if .}}
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Name</th>
+<th>URL</th>
+<th>Entries</th>
+<th>Last Fetched</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{{range .}}
+<tr>
+<td>
+<label class="toggle" hx-put="/web/lists/{{.ID}}/toggle" hx-target="#lists-table" hx-swap="outerHTML" hx-include="this">
+<input type="hidden" name="enabled" value="{{if .Enabled}}false{{else}}true{{end}}">
+<input type="checkbox" {{if .Enabled}}checked{{end}} onchange="htmx.trigger(this.parentElement, 'click')">
+<span class="slider"></span>
+</label>
+</td>
+<td>{{.Name}}</td>
+<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{.URL}}</td>
+<td>{{.EntryCount}}</td>
+<td>{{if .LastFetched.IsZero}}—{{else}}{{.LastFetched.Format "2006-01-02 15:04"}}{{end}}</td>
+<td>
+{{if gt .ConsecutiveFailures 0}}
+<span class="badge badge-off" title="{{.LastError}}">{{.ConsecutiveFailures}} fails</span>
+{{end}}
+</td>
+<td>
+<button class="btn btn-danger btn-sm"
+hx-delete="/web/lists/{{.ID}}"
+hx-target="#lists-table"
+hx-swap="outerHTML"
+hx-confirm="Remove this list and all its entries?">Delete</button>
+</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+{{else}}
+<p style="color:#888;text-align:center;padding:1.5rem;">No lists configured. Add one above.</p>
+{{end}}
+</div>
+{{end}}

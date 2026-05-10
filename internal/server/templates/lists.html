@@ -1,0 +1,28 @@
+{{define "lists"}}
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body hx-boost="true">
+{{template "nav" .}}
+<main>
+<h1>Source Lists</h1>
+<div class="card">
+<div class="form-row">
+<input type="text" name="name" form="add-list" placeholder="List name" required>
+<input type="url" name="url" form="add-list" placeholder="https://..." required>
+<button class="btn btn-primary" form="add-list">Add</button>
+</div>
+<form id="add-list"
+hx-post="/web/lists"
+hx-target="#lists-table"
+hx-swap="outerHTML"
+hx-on::after-request="this.reset()">
+</form>
+</div>
+<div id="lists-table">
+{{template "lists-table" .Lists}}
+</div>
+</main>
+</body>
+</html>
+{{end}}

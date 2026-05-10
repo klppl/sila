@@ -1,0 +1,43 @@
+{{define "whitelist"}}
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body hx-boost="true">
+{{template "nav" .}}
+<main>
+<h1>Whitelist</h1>
+<div class="card">
+<div class="form-row">
+<input type="text" name="pattern" form="add-wl" placeholder="example.com or *.example.com" required>
+<button class="btn btn-primary" form="add-wl">Add</button>
+</div>
+<form id="add-wl"
+hx-post="/web/whitelist"
+hx-target="#wl-table"
+hx-swap="outerHTML"
+hx-on::after-request="this.reset()">
+</form>
+</div>
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:0.9rem;color:#555;">Bulk import</summary>
+<div style="margin-top:0.75rem;">
+<textarea name="patterns" form="add-wl-bulk" placeholder="Paste domains, one per line"
+style="width:100%;height:100px;padding:0.5rem;border:1px solid #ddd;border-radius:5px;font-size:0.85rem;resize:vertical;"></textarea>
+<button class="btn btn-primary" form="add-wl-bulk" style="margin-top:0.5rem;">Import</button>
+</div>
+</details>
+<form id="add-wl-bulk"
+hx-post="/web/whitelist/bulk"
+hx-target="#wl-table"
+hx-swap="outerHTML"
+hx-on::after-request="this.reset()">
+</form>
+</div>
+<div id="wl-table">
+{{template "whitelist-table" .Entries}}
+</div>
+</main>
+</body>
+</html>
+{{end}}

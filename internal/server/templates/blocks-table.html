@@ -1,0 +1,32 @@
+{{define "blocks-table"}}
+<div class="card">
+{{if .}}
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Added</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{{range .}}
+<tr>
+<td><code>{{.Pattern}}</code></td>
+<td>{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+<td>
+<button class="btn btn-danger btn-sm"
+hx-delete="/web/blocks/{{.ID}}"
+hx-target="#blocks-table"
+hx-swap="outerHTML"
+hx-confirm="Remove this block entry?">Remove</button>
+</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+{{else}}
+<p style="color:#888;text-align:center;padding:1.5rem;">No custom blocks. Add one above.</p>
+{{end}}
+</div>
+{{end}}

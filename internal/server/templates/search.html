@@ -1,0 +1,25 @@
+{{define "search"}}
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body hx-boost="true">
+{{template "nav" .}}
+<main>
+<h1>Search Domains</h1>
+<div class="card">
+<input type="search" name="q"
+placeholder="Search for a domain..."
+hx-get="/web/search/results"
+hx-trigger="keyup delay:150ms"
+hx-target="#search-results"
+hx-include="this"
+style="width:100%;padding:0.6rem 0.8rem;border:1px solid #ddd;border-radius:5px;font-size:0.95rem;"
+autofocus>
+</div>
+<div id="search-results">
+{{template "search-results" .Results}}
+</div>
+</main>
+</body>
+</html>
+{{end}}

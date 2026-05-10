@@ -1,0 +1,175 @@
+{{define "public"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sila — Blocklist Aggregator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+header { background: #1a1a2e; color: #fff; padding: 3rem 1.5rem 2rem; text-align: center; }
+header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+header p { color: #a0a0c0; font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+.stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.stat-card { flex: 1; min-width: 140px; background: #fff; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+.stat-card .value { font-size: 2rem; font-weight: 700; color: #4361ee; }
+.stat-card .label { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
+.card { background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1rem; }
+.card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+.card p { color: #555; line-height: 1.6; font-size: 0.95rem; }
+.sources { list-style: none; }
+.sources li { padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+.sources li:last-child { border-bottom: none; }
+.sources .name { font-weight: 600; }
+.sources .url { color: #888; font-size: 0.8rem; word-break: break-all; }
+.badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+.badge-on { background: #d4edda; color: #155724; }
+.badge-off { background: #f8d7da; color: #721c24; }
+.btn { display: inline-block; padding: 0.6rem 1.2rem; border: none; border-radius: 5px; cursor: pointer; font-size: 0.95rem; text-decoration: none; font-weight: 600; }
+.btn-primary { background: #4361ee; color: #fff; }
+.btn-primary:hover { background: #3a56d4; }
+.btn-secondary { background: #e9ecef; color: #333; }
+.btn-secondary:hover { background: #dee2e6; }
+.dl-box { background: #f0f3ff; border: 2px dashed #4361ee; border-radius: 8px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; }
+.dl-box h2 { font-size: 1.2rem; margin-bottom: 0.5rem; color: #1a1a2e; }
+.dl-box p { color: #555; font-size: 0.9rem; margin-bottom: 1rem; }
+.url-copy { display: flex; gap: 0; max-width: 500px; margin: 0 auto; }
+.url-copy input { flex: 1; padding: 0.55rem 0.8rem; border: 1px solid #ddd; border-right: none; border-radius: 5px 0 0 5px; font-size: 0.9rem; font-family: monospace; background: #fff; color: #333; }
+.url-copy .copy-btn { padding: 0.55rem 1rem; background: #4361ee; color: #fff; border: none; border-radius: 0 5px 5px 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+.url-copy .copy-btn:hover { background: #3a56d4; }
+.url-copy .copy-btn.copied { background: #4caf50; }
+.type-stats { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.type-stat { flex: 1; min-width: 110px; background: #fff; border-radius: 6px; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.06); text-align: center; }
+.type-stat .value { font-size: 1.3rem; font-weight: 700; color: #4361ee; }
+.type-stat .label { font-size: 0.7rem; color: #888; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.3px; }
+.bar-chart { list-style: none; }
+.bar-chart li { display: flex; align-items: center; padding: 0.35rem 0; font-size: 0.85rem; }
+.bar-chart .label { flex: 0 0 160px; text-align: right; padding-right: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-chart .bar-wrap { flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.bar-chart .bar { height: 100%; background: #4361ee; border-radius: 4px; min-width: 4px; transition: width 0.3s; }
+.bar-chart .count { flex: 0 0 50px; padding-left: 0.5rem; font-size: 0.8rem; color: #888; }
+footer { text-align: center; padding: 2rem; color: #999; font-size: 0.85rem; }
+footer a { color: #888; }
+</style>
+</head>
+<body>
+<header>
+<h1>Sila</h1>
+<p>Merge and filter adblock lists into one, self-hosted.</p>
+</header>
+<main>
+<div class="stats">
+<div class="stat-card">
+<div class="value">{{.TotalDomains}}</div>
+<div class="label">{{if eq .TotalDomains 0}}—{{else}}Blocked domains{{end}}</div>
+</div>
+<div class="stat-card">
+<div class="value">{{.TotalLists}}</div>
+<div class="label">Source lists</div>
+</div>
+<div class="stat-card">
+<div class="value">{{.WhitelistCount}}</div>
+<div class="label">Whitelisted</div>
+</div>
+<div class="stat-card">
+<div class="value">{{.BlockCount}}</div>
+<div class="label">Custom blocks</div>
+</div>
+<div class="stat-card">
+<div class="value">{{relativeTime .LastRefresh}}</div>
+<div class="label">Last refresh</div>
+</div>
+</div>
+
+<div class="type-stats">
+<div class="type-stat"><div class="value">{{.Stats.Network}}</div><div class="label">Domain filters</div></div>
+<div class="type-stat"><div class="value">{{.Stats.Cosmetic}}</div><div class="label">Cosmetic</div></div>
+{{if gt .Stats.Script 0}}<div class="type-stat"><div class="value">{{.Stats.Script}}</div><div class="label">Scriptlets</div></div>{{end}}
+{{if gt .Stats.ExtCSS 0}}<div class="type-stat"><div class="value">{{.Stats.ExtCSS}}</div><div class="label">Extended CSS</div></div>{{end}}
+{{if gt .Stats.Except 0}}<div class="type-stat"><div class="value">{{.Stats.Except}}</div><div class="label">Exceptions</div></div>{{end}}
+</div>
+
+<div class="dl-box">
+<h2>Subscribe to this blocklist</h2>
+<p>Click to copy the URL, then paste it into your adblocker.</p>
+<div class="url-copy">
+<input type="text" id="blocklist-url" value="{{.BlocklistURL}}/blocklist.txt" readonly onclick="this.select()">
+<button class="copy-btn" onclick="copyURL()">Copy</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Source lists</h2>
+{{if .Lists}}
+<ul class="sources">
+{{range .Lists}}
+<li>
+<span class="name">{{.Name}}</span>
+<span class="badge {{if .Enabled}}badge-on{{else}}badge-off{{end}}">{{if .Enabled}}enabled{{else}}disabled{{end}}</span>
+{{if gt .EntryCount 0}}<span style="color:#888;font-size:0.8rem;">· {{.EntryCount}} entries</span>{{end}}
+<br><span class="url">{{.URL}}</span>
+</li>
+{{end}}
+</ul>
+{{else}}
+<p style="color:#888;">No lists configured yet.</p>
+{{end}}
+</div>
+
+<div class="card">
+<h2>Top source lists</h2>
+{{if .TopLists}}
+<ul class="bar-chart">
+{{range .TopLists}}
+<li>
+<span class="label" title="{{.Label}}">{{.Label}}</span>
+<div class="bar-wrap"><div class="bar" style="width:{{printf "%.0f" .Width}}%"></div></div>
+<span class="count">{{.Count}}</span>
+</li>
+{{end}}
+</ul>
+{{else}}
+<p style="color:#888;">Waiting for first refresh...</p>
+{{end}}
+</div>
+
+<div class="card">
+<h2>Top domain roots</h2>
+{{if .Stats.TopRoots}}
+<ul class="bar-chart">
+{{range .Stats.TopRoots}}
+<li>
+<span class="label" title="{{.Label}}">{{.Label}}</span>
+<div class="bar-wrap"><div class="bar" style="width:{{printf "%.0f" .Width}}%"></div></div>
+<span class="count">{{.Count}}</span>
+</li>
+{{end}}
+</ul>
+{{else}}
+<p style="color:#888;">Waiting for first refresh...</p>
+{{end}}
+</div>
+
+</main>
+<footer>
+<a href="/web">Admin</a>
+</footer>
+<script>
+function copyURL() {
+  var input = document.getElementById('blocklist-url');
+  input.select();
+  document.execCommand('copy');
+  var btn = document.querySelector('.copy-btn');
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(function() {
+    btn.textContent = 'Copy';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+</script>
+</body>
+</html>
+{{end}}
