@@ -1,8 +1,13 @@
-{{define "head"}}
-<head>
+{{define "meta"}}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sila — {{.Title}}</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 L28 8 L28 18 C28 25 16 30 16 30 C16 30 4 25 4 18 L4 8 Z' fill='%234361ee'/%3E%3Cpath d='M13 17 L11 15 L10 16 L13 19 L22 10 L21 9 Z' fill='white'/%3E%3C/svg%3E">
+{{end}}
+
+{{define "head"}}
+<head>
+{{template "meta" .}}
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,7 +32,7 @@ tr:hover td { background: #fafafa; }
 .form-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center; }
 .form-row input { padding: 0.45rem 0.7rem; border: 1px solid #ddd; border-radius: 5px; font-size: 0.9rem; flex: 1; }
 .form-row input:focus { outline: none; border-color: #4361ee; box-shadow: 0 0 0 2px rgba(67,97,238,0.2); }
-.stats { display: flex; gap: 1rem; flex-wrap: wrap; }
+.stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .stat-card { flex: 1; min-width: 150px; background: #fff; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
 .stat-card .value { font-size: 2rem; font-weight: 700; color: #4361ee; }
 .stat-card .label { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
@@ -45,8 +50,8 @@ tr:hover td { background: #fafafa; }
 .htmx-indicator { opacity: 0; transition: opacity 0.2s; }
 .htmx-request .htmx-indicator, .htmx-indicator.htmx-request { opacity: 1; }
 tr.htmx-swapping { opacity: 0.5; }
-.type-stats { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.type-stat { flex: 1; min-width: 110px; background: #fff; border-radius: 6px; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.06); text-align: center; }
+.type-stats { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.type-stat { flex: 0 0 130px; background: #fff; border-radius: 6px; padding: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.06); text-align: center; }
 .type-stat .value { font-size: 1.3rem; font-weight: 700; color: #4361ee; }
 .type-stat .label { font-size: 0.7rem; color: #888; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.3px; }
 .bar-chart { list-style: none; }

@@ -140,13 +140,13 @@ func (srv *Server) loginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/web", http.StatusSeeOther)
 		return
 	}
-	srv.render(w, "login", nil)
+	srv.render(w, "login", map[string]any{"Title": "Login"})
 }
 
 func (srv *Server) loginSubmit(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	if password != srv.adminPassword {
-		srv.render(w, "login", map[string]any{"Error": "Wrong password"})
+		srv.render(w, "login", map[string]any{"Error": "Wrong password", "Title": "Login"})
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
@@ -324,7 +324,7 @@ func (srv *Server) publicPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	srv.render(w, "public", map[string]any{
-		"Title":          "Sila",
+		"Title":          "Blocklist Aggregator",
 		"TotalDomains":   domains,
 		"TotalLists":     listCount,
 		"WhitelistCount": len(whitelistEntries),
