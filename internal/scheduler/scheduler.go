@@ -132,8 +132,14 @@ func (sc *Scheduler) refresh() {
 	for k, v := range sc.rules {
 		allRules[k] = v
 	}
-	allExtra := make([]string, len(sc.extra))
-	copy(allExtra, sc.extra)
+	extraSet := make(map[string]bool)
+	var allExtra []string
+	for _, s := range sc.extra {
+		if !extraSet[s] {
+			extraSet[s] = true
+			allExtra = append(allExtra, s)
+		}
+	}
 	sc.rulesMu.RUnlock()
 
 	updated := 0
@@ -166,7 +172,12 @@ func (sc *Scheduler) refresh() {
 		for d, r := range result.Rules {
 			allRules[d] = r
 		}
-		allExtra = append(allExtra, result.Standalone...)
+		for _, s := range result.Standalone {
+			if !extraSet[s] {
+				extraSet[s] = true
+				allExtra = append(allExtra, s)
+			}
+		}
 		log.Printf("scheduler: refreshed %s (%d domains)", l.Name, len(result.Domains))
 		updated++
 	}
@@ -194,25 +205,6 @@ func (sc *Scheduler) refresh() {
 		}
 	}
 
-	// Compress allRules by removing redundant subdomains
-	var removed int
-	for domain := range allRules {
-		parts := strings.Split(domain, ".")
-		if len(parts) <= 2 {
-			continue
-		}
-		for i := 1; i < len(parts)-1; i++ {
-			parent := strings.Join(parts[i:], ".")
-			if pRule, ok := allRules[parent]; ok && pRule == "||"+parent+"^" {
-				delete(allRules, domain)
-				removed++
-				break
-			}
-		}
-	}
-	if removed > 0 {
-		log.Printf("scheduler: compressed out %d redundant subdomains across lists", removed)
-	}
 
 	sc.rulesMu.Lock()
 	sc.rules = allRules

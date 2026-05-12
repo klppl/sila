@@ -97,26 +97,17 @@ func Parse(raw string) *Result {
 			}
 			continue
 		}
+		
+		if rule != "||"+domain+"^" {
+			standalone = append(standalone, rule)
+			continue
+		}
+
 		if seen[domain] {
 			continue
 		}
 		seen[domain] = true
 		rules[domain] = rule
-	}
-
-	for domain := range rules {
-		parts := strings.Split(domain, ".")
-		if len(parts) <= 2 {
-			continue
-		}
-		for i := 1; i < len(parts)-1; i++ {
-			parent := strings.Join(parts[i:], ".")
-			if pRule, ok := rules[parent]; ok && pRule == "||"+parent+"^" {
-				delete(rules, domain)
-				delete(seen, domain)
-				break
-			}
-		}
 	}
 
 	domains := make([]string, 0, len(seen))
