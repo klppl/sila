@@ -8,16 +8,14 @@ import (
 	"github.com/klppl/sila/internal/fetcher"
 	"github.com/klppl/sila/internal/parser"
 	"github.com/klppl/sila/internal/store"
-	"golang.org/x/net/publicsuffix"
 )
 
 type Scheduler struct {
 	store   *store.Store
 	fetcher *fetcher.Client
 
-	interval            time.Duration
-	aggressiveThreshold int
-	mu                  sync.RWMutex
+	interval time.Duration
+	mu       sync.RWMutex
 	last     time.Time
 	running  bool
 
@@ -28,13 +26,12 @@ type Scheduler struct {
 	stop chan struct{}
 }
 
-func New(s *store.Store, f *fetcher.Client, interval time.Duration, aggrThreshold int) *Scheduler {
+func New(s *store.Store, f *fetcher.Client, interval time.Duration) *Scheduler {
 	return &Scheduler{
-		store:               s,
-		fetcher:             f,
-		interval:            interval,
-		aggressiveThreshold: aggrThreshold,
-		stop:                make(chan struct{}),
+		store:    s,
+		fetcher:  f,
+		interval: interval,
+		stop:     make(chan struct{}),
 	}
 }
 
@@ -179,29 +176,6 @@ func (sc *Scheduler) refresh() {
 		}
 		log.Printf("scheduler: refreshed %s (%d domains)", l.Name, len(result.Domains))
 		updated++
-	}
-
-	if sc.aggressiveThreshold > 0 {
-		baseCounts := make(map[string]int)
-		for domain := range allRules {
-			base, err := publicsuffix.EffectiveTLDPlusOne(domain)
-			if err == nil && base != domain {
-				baseCounts[base]++
-			}
-		}
-
-		aggrAdded := 0
-		for base, count := range baseCounts {
-			if count >= sc.aggressiveThreshold {
-				if _, exists := allRules[base]; !exists {
-					allRules[base] = "||" + base + "^"
-					aggrAdded++
-				}
-			}
-		}
-		if aggrAdded > 0 {
-			log.Printf("scheduler: aggressive compression added %d base domains", aggrAdded)
-		}
 	}
 
 

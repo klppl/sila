@@ -49,14 +49,7 @@ func main() {
 		}
 	}
 
-	var aggrThreshold int
-	if v := os.Getenv("SILA_AGGRESSIVE_THRESHOLD"); v != "" {
-		if t, err := strconv.Atoi(v); err == nil && t > 0 {
-			aggrThreshold = t
-		}
-	}
-
-	sc := scheduler.New(s, f, interval, aggrThreshold)
+	sc := scheduler.New(s, f, interval)
 	sc.Start()
 
 	adminPassword := os.Getenv("SILA_ADMIN_PASSWORD")
