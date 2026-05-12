@@ -119,6 +119,9 @@ func TestParseExceptionSkips(t *testing.T) {
 	if len(r.Domains) != 1 || r.Domains[0] != "real-block.com" {
 		t.Fatalf("expected [real-block.com], got %v", r.Domains)
 	}
+	if len(r.Standalone) != 1 || r.Standalone[0] != "@@||whitelisted.com^" {
+		t.Fatalf("expected @@ rule in standalone, got %v", r.Standalone)
+	}
 }
 
 func TestParseURLRegex(t *testing.T) {

@@ -39,7 +39,8 @@ func Parse(raw string) *Result {
 		isStandalone := false
 
 		switch {
-		case strings.HasPrefix(line, "@@||"):
+		case strings.HasPrefix(line, "@@"):
+			standalone = append(standalone, line)
 			continue
 		case strings.HasPrefix(line, "/"):
 			standalone = append(standalone, line)
