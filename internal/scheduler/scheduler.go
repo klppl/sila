@@ -161,7 +161,9 @@ func (sc *Scheduler) refresh() {
 			}
 			continue
 		}
-		if err := sc.store.UpdateListFetched(l.ID, len(result.Domains)); err != nil {
+		// Count both domain blocks and verbatim rules so cosmetic/annoyance
+		// lists (which have few or no plain domains) don't report 0 entries.
+		if err := sc.store.UpdateListFetched(l.ID, len(result.Domains)+len(result.Standalone)); err != nil {
 			log.Printf("scheduler: update list %s: %v", l.Name, err)
 			continue
 		}
@@ -174,10 +176,9 @@ func (sc *Scheduler) refresh() {
 				allExtra = append(allExtra, s)
 			}
 		}
-		log.Printf("scheduler: refreshed %s (%d domains)", l.Name, len(result.Domains))
+		log.Printf("scheduler: refreshed %s (%d domains, %d rules)", l.Name, len(result.Domains), len(result.Standalone))
 		updated++
 	}
-
 
 	sc.rulesMu.Lock()
 	sc.rules = allRules

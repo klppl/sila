@@ -111,27 +111,27 @@ func (srv *Server) Router() chi.Router {
 				r.Delete("/{id}", srv.listsDelete)
 			})
 
-		r.Route("/whitelist", func(r chi.Router) {
-			r.Get("/", srv.whitelistPage)
-			r.Get("/table", srv.whitelistTable)
-			r.Post("/", srv.whitelistAdd)
-			r.Post("/bulk", srv.whitelistBulk)
-			r.Delete("/{id}", srv.whitelistDelete)
-		})
+			r.Route("/whitelist", func(r chi.Router) {
+				r.Get("/", srv.whitelistPage)
+				r.Get("/table", srv.whitelistTable)
+				r.Post("/", srv.whitelistAdd)
+				r.Post("/bulk", srv.whitelistBulk)
+				r.Delete("/{id}", srv.whitelistDelete)
+			})
 
-		r.Route("/blocks", func(r chi.Router) {
-			r.Get("/", srv.blocksPage)
-			r.Get("/table", srv.blocksTable)
-			r.Post("/", srv.blocksAdd)
-			r.Post("/bulk", srv.blocksBulk)
-			r.Delete("/{id}", srv.blocksDelete)
-		})
+			r.Route("/blocks", func(r chi.Router) {
+				r.Get("/", srv.blocksPage)
+				r.Get("/table", srv.blocksTable)
+				r.Post("/", srv.blocksAdd)
+				r.Post("/bulk", srv.blocksBulk)
+				r.Delete("/{id}", srv.blocksDelete)
+			})
 
-		r.Route("/search", func(r chi.Router) {
-			r.Get("/", srv.searchPage)
-			r.Get("/results", srv.searchResults)
-			r.Post("/whitelist", srv.searchWhitelist)
-		})
+			r.Route("/search", func(r chi.Router) {
+				r.Get("/", srv.searchPage)
+				r.Get("/results", srv.searchResults)
+				r.Post("/whitelist", srv.searchWhitelist)
+			})
 
 			r.Post("/refresh", srv.refresh)
 		})
@@ -241,19 +241,23 @@ func (srv *Server) getStats() computedStats {
 	cs := computedStats{}
 	roots := make(map[string]int)
 
-	srv.scheduler.WalkRules(func(domain, rule string) {
+	classify := func(rule string) {
 		switch {
 		case strings.Contains(rule, "#$#"):
 			cs.Script++
 		case strings.Contains(rule, "#?#"):
 			cs.ExtCSS++
-		case strings.Contains(rule, "#@#"):
+		case strings.Contains(rule, "#@#"), strings.HasPrefix(rule, "@@"):
 			cs.Except++
 		case strings.Contains(rule, "##"):
 			cs.Cosmetic++
 		default:
 			cs.Network++
 		}
+	}
+
+	srv.scheduler.WalkRules(func(domain, rule string) {
+		classify(rule)
 
 		parts := strings.Split(domain, ".")
 		if len(parts) >= 2 {
@@ -262,6 +266,12 @@ func (srv *Server) getStats() computedStats {
 			roots[domain]++
 		}
 	})
+
+	// Cosmetic, scriptlet and exception rules live in the standalone set, not
+	// the domain map, so include them in the rule-type breakdown.
+	for _, rule := range srv.scheduler.GetExtra() {
+		classify(rule)
+	}
 
 	cs.TopRoots = topBars(roots, 10)
 	srv.cachedStats = cs
@@ -541,6 +551,9 @@ func (srv *Server) listsAdd(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
+	// Fetch & parse the new list immediately so its entry count populates
+	// instead of showing 0 until the next scheduled refresh.
+	srv.scheduler.Refresh()
 	lists, err := srv.store.GetLists()
 	if err != nil {
 		logError(r, "get lists: %v", err)

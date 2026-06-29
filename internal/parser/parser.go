@@ -8,9 +8,14 @@ import (
 )
 
 var (
-	hostsLineRe   = regexp.MustCompile(`^(?:0\.0\.0\.0|127\.0\.0\.1)\s+(.+)`)
-	abpRe         = regexp.MustCompile(`^\|\|(.+?)\^`)
-	cosmeticRe    = regexp.MustCompile(`^(.+?)#[#@\$?]`)
+	hostsLineRe = regexp.MustCompile(`^(?:0\.0\.0\.0|127\.0\.0\.1)\s+(.+)`)
+	abpRe       = regexp.MustCompile(`^\|\|(.+?)\^`)
+	cosmeticRe  = regexp.MustCompile(`^(.+?)#[#@\$?]`)
+	// genericCosRe matches an ABP generic cosmetic/scriptlet filter with no
+	// domain anchor (##selector, ###id, #@#, #?#, #$#, #%#). These must be kept
+	// for uBlock and distinguished from hosts-style "# comment" lines, which
+	// have a space or letter after the '#'.
+	genericCosRe  = regexp.MustCompile(`^#[#@?$%]`)
 	validDomainRe = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)+$`)
 )
 
@@ -31,7 +36,15 @@ func Parse(raw string) *Result {
 		if line == "" {
 			continue
 		}
-		if line[0] == '#' || line[0] == '!' || line[0] == '[' {
+		if line[0] == '!' || line[0] == '[' {
+			continue
+		}
+		// Lines starting with '#' are either an ABP generic cosmetic filter
+		// (kept verbatim) or a hosts-style comment (skipped).
+		if line[0] == '#' {
+			if genericCosRe.MatchString(line) {
+				standalone = append(standalone, line)
+			}
 			continue
 		}
 
@@ -97,7 +110,7 @@ func Parse(raw string) *Result {
 			}
 			continue
 		}
-		
+
 		if rule != "||"+domain+"^" {
 			standalone = append(standalone, rule)
 			continue
