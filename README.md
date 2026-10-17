@@ -1,5 +1,7 @@
 # Sila
 
+[![License: Lagom](https://img.shields.io/badge/license-lagom-9E2B25)](https://klppl.github.io/lagom-license/)
+
 Self-hosted blocklist aggregator — fetches multiple third-party adblock/blocklists, deduplicates them, applies a user-managed whitelist, and serves the merged output as a single blocklist. Includes a web-based admin UI.
 
 ## Quickstart
